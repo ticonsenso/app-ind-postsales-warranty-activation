@@ -1,0 +1,125 @@
+@import 'tailwindcss';
+
+@import '@fontsource/raleway/latin-600.css';
+@import '@fontsource/raleway/latin-700.css';
+@import '@fontsource/raleway/latin-800.css';
+@import '@fontsource/titillium-web/latin-300.css';
+@import '@fontsource/titillium-web/latin-400.css';
+@import '@fontsource/titillium-web/latin-600.css';
+@import '@fontsource/titillium-web/latin-700.css';
+
+/*
+ * Single source of truth for the visual identity. Components consume these tokens through
+ * Tailwind utilities (bg-primary, text-ink-muted, rounded-card...). Do not hardcode hex colors
+ * in components: add or reuse a token here.
+ */
+@theme {
+  /* The default Tailwind palette is disabled on purpose: only brand tokens can be used. */
+  --color-*: initial;
+
+  --font-sans: 'Titillium Web', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Raleway', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Brand (Pantone 287 / 2995) */
+  --color-primary: #00338d;
+  --color-primary-dark: #00297a;
+  --color-primary-bright: #0057c8;
+  --color-accent: #00a9e0;
+  --color-accent-soft: #7fd6f5;
+
+  /* Dark surfaces (landing) */
+  --color-night-950: #000b1f;
+  --color-night-900: #00112e;
+  --color-night-800: #062044;
+  --color-night-700: #0c2c58;
+  --color-night-600: #10376b;
+
+  /* Text tones on dark surfaces */
+  --color-mist-100: #eaf2fb;
+  --color-mist-300: #a9c2de;
+  --color-mist-400: #8fa9c8;
+  --color-mist-500: #63799a;
+
+  /* Light surfaces (warranty flow) */
+  --color-page: #edf2f9;
+  --color-muted: #f3f6fa;
+  --color-ink: #0a1b36;
+  --color-ink-muted: #5a6b85;
+  --color-line: #d7e1ef;
+  --color-disabled: #b7c6dc;
+
+  /* Status */
+  --color-success: #0e9f6e;
+  --color-success-bg: #edfaf4;
+  --color-success-border: #bdebd8;
+  --color-success-text: #0b6046;
+  --color-danger: #d93a3a;
+  --color-danger-bg: #fdf0f0;
+  --color-danger-border: #f6cfcf;
+  --color-danger-text: #8e2020;
+  --color-info-bg: #f0f7fe;
+  --color-info-border: #cfe4f8;
+  --color-info-text: #20456f;
+
+  --color-whatsapp: #25d366;
+
+  --radius-field: 8px;
+  --radius-card: 14px;
+  --radius-panel: 22px;
+
+  --shadow-glow: 0 18px 40px -22px color-mix(in srgb, var(--color-accent) 90%, transparent);
+
+  --breakpoint-tablet: 720px;
+
+  /* Loading placeholders: a highlight band sweeps left to right over a 200%-wide gradient. */
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+
+  @keyframes shimmer {
+    from {
+      background-position: 150% 0;
+    }
+    to {
+      background-position: -50% 0;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-page font-sans text-base leading-[1.55] text-ink;
+  }
+
+  /* Lock page scroll behind an open modal dialog. */
+  body:has(dialog[open]) {
+    overflow: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display font-bold tracking-[-0.015em];
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
