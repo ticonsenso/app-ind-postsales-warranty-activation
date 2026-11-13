@@ -32,6 +32,21 @@ export function ConfirmationStep() {
     if (result) dispatch({ type: 'warranty-activated', activation: result });
   };
 
+  const errorAction = error?.customerAlreadyExists
+    ? {
+        label: 'Volver al paso 1',
+        onClick: () => void navigate(ROUTES.warranty.identification),
+      }
+    : error?.serialAlreadyRegistered
+      ? {
+          label: 'Cambiar producto',
+          onClick: () => {
+            dispatch({ type: 'product-cleared' });
+            void navigate(ROUTES.warranty.product);
+          },
+        }
+      : undefined;
+
   return (
     <Panel>
       {activation ? (
@@ -46,14 +61,7 @@ export function ConfirmationStep() {
             invoice={invoice}
             isActivating={activationRequest.state.status === 'activating'}
             errorMessage={error?.message}
-            errorAction={
-              error?.customerAlreadyExists
-                ? {
-                    label: 'Volver al paso 1',
-                    onClick: () => void navigate(ROUTES.warranty.identification),
-                  }
-                : undefined
-            }
+            errorAction={errorAction}
             onBack={() => void navigate(ROUTES.warranty.invoice)}
             onActivate={() => void handleActivate()}
           />

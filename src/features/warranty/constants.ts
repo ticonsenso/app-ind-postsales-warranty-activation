@@ -30,6 +30,12 @@ export const INVOICE_FIELD_NAME = 'invoice';
 /** Value for the `accept` attribute of the invoice file input. */
 export const INVOICE_ACCEPT_ATTRIBUTE = INVOICE_ACCEPTED_MIME_TYPES.join(',');
 
+/** Backend code answered when the serial already has a registered warranty (`422`). */
+export const SERIAL_ALREADY_REGISTERED_CODE = 'SERIAL_ALREADY_REGISTERED';
+/** Shown when the scanned or typed serial was already registered by someone else. */
+export const SERIAL_ALREADY_REGISTERED_MESSAGE =
+  'El producto ya se encuentra registrado, por favor intentar con otro.';
+
 /** Shown for any failure the user cannot act on. Technical detail never reaches the UI. */
 export const GENERIC_ERROR_MESSAGE =
   'No pudimos completar la operación. Intenta nuevamente en unos minutos.';

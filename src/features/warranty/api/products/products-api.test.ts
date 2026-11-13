@@ -28,6 +28,19 @@ describe('getProductBySerialNumber (GET /v1/products/serial/:serialNumber)', () 
     await expect(getProductBySerialNumber(EXISTING_PRODUCT_CODE)).resolves.toBeNull();
   });
 
+  it('rejects with SERIAL_ALREADY_REGISTERED when the serial already has a warranty', async () => {
+    server.use(
+      http.get(`${API_URL}/products/serial/:serialNumber`, () =>
+        failure(422, 'SERIAL_ALREADY_REGISTERED'),
+      ),
+    );
+
+    await expect(getProductBySerialNumber(EXISTING_PRODUCT_CODE)).rejects.toMatchObject({
+      code: 'SERIAL_ALREADY_REGISTERED',
+      status: 422,
+    });
+  });
+
   it('rejects with the backend error code on other failures', async () => {
     server.use(
       http.get(`${API_URL}/products/serial/:serialNumber`, () => failure(429, 'TOO_MANY_REQUESTS')),

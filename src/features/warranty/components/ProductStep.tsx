@@ -7,6 +7,7 @@ import { ActionRow } from '@/shared/components/ActionRow';
 import { Alert } from '@/shared/components/Alert';
 import { Button } from '@/shared/components/Button';
 import { Panel, PanelHeader } from '@/shared/components/Panel';
+import { Sheet } from '@/shared/components/Sheet';
 import { TextDivider } from '@/shared/components/TextDivider';
 import { TextField } from '@/shared/components/TextField';
 
@@ -61,6 +62,13 @@ export function ProductStep() {
   const handleChangeProduct = () => {
     dispatch({ type: 'product-cleared' });
     validation.reset();
+  };
+
+  // Closing the notice leaves the step ready to scan or type another serial.
+  const handleCloseAlreadyRegistered = () => {
+    validation.reset();
+    setValue('serialNumber', '');
+    clearErrors('serialNumber');
   };
 
   const isValidating = validation.state.status === 'validating';
@@ -143,6 +151,14 @@ export function ProductStep() {
           </form>
         </div>
       )}
+
+      <Sheet
+        open={validation.state.status === 'already-registered'}
+        onClose={handleCloseAlreadyRegistered}
+        title="Este producto ya fue registrado"
+      >
+        <Button onClick={handleCloseAlreadyRegistered}>Entendido</Button>
+      </Sheet>
     </Panel>
   );
 }
