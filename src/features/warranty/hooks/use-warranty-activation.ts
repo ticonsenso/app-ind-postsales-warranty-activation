@@ -4,7 +4,11 @@ import { isApiError } from '@/shared/api/api-error';
 import { useRequestSignal } from '@/shared/hooks/use-request-signal';
 import { isAbortError } from '@/shared/utils/abort';
 
-import { GENERIC_ERROR_MESSAGE } from '../constants';
+import {
+  GENERIC_ERROR_MESSAGE,
+  SERIAL_ALREADY_REGISTERED_CODE,
+  SERIAL_ALREADY_REGISTERED_MESSAGE,
+} from '../constants';
 import type { Activation, ActivationRequest } from '../schemas/activation.schema';
 import { createWarranty } from '../api/warranties/warranties-api';
 
@@ -15,6 +19,7 @@ const ERROR_MESSAGES: Readonly<Record<string, string | undefined>> = {
   PURCHASE_DATE_IN_FUTURE:
     'La fecha de compra de la factura es posterior a hoy. Revisa el comprobante y súbelo de nuevo.',
   TOO_MANY_REQUESTS: 'Hiciste demasiados intentos. Espera unos minutos y vuelve a intentarlo.',
+  [SERIAL_ALREADY_REGISTERED_CODE]: SERIAL_ALREADY_REGISTERED_MESSAGE,
   [CLIENT_ALREADY_EXISTS]:
     'Ya existe un cliente registrado con tu identificación. Vuelve al paso 1 y busca tus datos de nuevo.',
 };
@@ -43,6 +48,8 @@ export type WarrantyActivationState =
       message: string;
       /** The new customer's identification was registered meanwhile: they must search again. */
       customerAlreadyExists: boolean;
+      /** The serial was registered meanwhile: they must choose another product. */
+      serialAlreadyRegistered: boolean;
     };
 
 /**
@@ -79,6 +86,7 @@ export function useWarrantyActivation() {
           status: 'error',
           message: toErrorMessage(error),
           customerAlreadyExists: isApiError(error, CLIENT_ALREADY_EXISTS),
+          serialAlreadyRegistered: isApiError(error, SERIAL_ALREADY_REGISTERED_CODE),
         });
       }
       return null;
