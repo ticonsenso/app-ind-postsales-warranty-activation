@@ -499,6 +499,32 @@ describe('warranty registration', () => {
     expect(screen.queryByText('Producto identificado.')).not.toBeInTheDocument();
   });
 
+  it('warns with a dialog when the serial is already registered and lets the user try another', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get(`${API_URL}/products/serial/:serialNumber`, () =>
+        failure(422, 'SERIAL_ALREADY_REGISTERED'),
+      ),
+    );
+    renderApp('/garantia/identificacion');
+    await completeIdentification(user);
+
+    await user.type(await screen.findByLabelText('Número de serie'), EXISTING_PRODUCT_CODE);
+    await user.click(screen.getByRole('button', { name: 'Validar producto' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Este producto ya fue registrado' });
+    expect(screen.queryByText('Producto identificado.')).not.toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Entendido' }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: 'Este producto ya fue registrado' }),
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getByLabelText('Número de serie')).toHaveValue('');
+  });
+
   it('shows a generic error when the product lookup fails', async () => {
     const user = userEvent.setup();
     server.use(

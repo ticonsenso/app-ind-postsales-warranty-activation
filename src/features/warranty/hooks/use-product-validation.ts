@@ -3,11 +3,18 @@ import { useState } from 'react';
 import { useRequestSignal } from '@/shared/hooks/use-request-signal';
 import { isAbortError } from '@/shared/utils/abort';
 
+import { isApiError } from '@/shared/api/api-error';
+
+import { SERIAL_ALREADY_REGISTERED_CODE } from '../constants';
 import type { Product } from '../schemas/product.schema';
 import { getProductBySerialNumber } from '../api/products/products-api';
 
 export type ProductValidationState =
-  { status: 'idle' } | { status: 'validating' } | { status: 'not-found' } | { status: 'error' };
+  | { status: 'idle' }
+  | { status: 'validating' }
+  | { status: 'not-found' }
+  | { status: 'already-registered' }
+  | { status: 'error' };
 
 /**
  * Checks a serial number against the CRM.
@@ -26,7 +33,11 @@ export function useProductValidation() {
       setState(product ? { status: 'idle' } : { status: 'not-found' });
       return product;
     } catch (error) {
-      if (!isAbortError(error)) setState({ status: 'error' });
+      if (isApiError(error, SERIAL_ALREADY_REGISTERED_CODE)) {
+        setState({ status: 'already-registered' });
+      } else if (!isAbortError(error)) {
+        setState({ status: 'error' });
+      }
       return null;
     }
   };
