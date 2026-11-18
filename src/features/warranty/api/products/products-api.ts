@@ -31,9 +31,42 @@ export async function getProductBySerialNumber(
       { signal },
     );
     const dto = parseApiData(productDtoSchema, response.data);
-    return { id: dto.Id, code: dto.Code, name: dto.Name, serialNumber };
+    return { id: dto.Id, code: dto.Code, name: dto.Name, serialNumber, identifiedBy: 'serial' };
   } catch (error) {
     if (isApiError(error, ...NOT_FOUND_CODES)) return null;
+    throw error;
+  }
+}
+
+/** Code with which the backend reports that no CRM product has the given SAP code. */
+const PRODUCT_NOT_FOUND_CODE = 'PRODUCT_NOT_FOUND';
+
+/**
+ * Looks up a product by its SAP code (`GET /v1/products/code/:code`), straight in the Creatio
+ * `Product` table. Fallback for serials SAP does not know (e.g. imported products).
+ *
+ * @param sapCode - SAP code of the product (Creatio `Code` column)
+ * @param serialNumber - Serial of the unit being registered; kept in the returned product
+ * @param signal - Cancels the request
+ * @returns The product, or `null` when no CRM product has that code (`PRODUCT_NOT_FOUND`)
+ * @throws {ApiError} For any other failure
+ * @author Cristian Brito
+ * @since 2026-11-18
+ */
+export async function getProductBySapCode(
+  sapCode: string,
+  serialNumber: string,
+  signal?: AbortSignal,
+): Promise<Product | null> {
+  try {
+    const response = await httpClient.get<unknown>(
+      `/products/code/${encodeURIComponent(sapCode)}`,
+      { signal },
+    );
+    const dto = parseApiData(productDtoSchema, response.data);
+    return { id: dto.Id, code: dto.Code, name: dto.Name, serialNumber, identifiedBy: 'sap-code' };
+  } catch (error) {
+    if (isApiError(error, PRODUCT_NOT_FOUND_CODE)) return null;
     throw error;
   }
 }

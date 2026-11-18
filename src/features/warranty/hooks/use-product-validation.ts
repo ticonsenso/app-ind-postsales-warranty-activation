@@ -12,7 +12,8 @@ import { getProductBySerialNumber } from '../api/products/products-api';
 export type ProductValidationState =
   | { status: 'idle' }
   | { status: 'validating' }
-  | { status: 'not-found' }
+  /** SAP does not know `serialNumber`; the product can still be looked up by its SAP code. */
+  | { status: 'not-found'; serialNumber: string }
   | { status: 'already-registered' }
   | { status: 'error' };
 
@@ -30,7 +31,7 @@ export function useProductValidation() {
 
     try {
       const product = await getProductBySerialNumber(serialNumber, signal);
-      setState(product ? { status: 'idle' } : { status: 'not-found' });
+      setState(product ? { status: 'idle' } : { status: 'not-found', serialNumber });
       return product;
     } catch (error) {
       if (isApiError(error, SERIAL_ALREADY_REGISTERED_CODE)) {

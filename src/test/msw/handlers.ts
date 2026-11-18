@@ -87,6 +87,16 @@ export const handlers = [
       : failure(404, 'SERIAL_NOT_FOUND', 'El recurso solicitado no existe.'),
   ),
 
+  http.get(`${API_URL}/products/code/:code`, ({ params }) =>
+    params.code === EXISTING_PRODUCT_CODE
+      ? success({
+          Id: '0c1d2e3f-0000-4000-8000-000000000001',
+          Name: 'Heladera',
+          Code: EXISTING_PRODUCT_CODE,
+        })
+      : failure(404, 'PRODUCT_NOT_FOUND', 'El recurso solicitado no existe.'),
+  ),
+
   http.post(`${API_URL}/warranties/invoice-extraction`, () => success(INVOICE_FIXTURE)),
 
   http.post(`${API_URL}/warranties`, ({ request }) =>

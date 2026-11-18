@@ -17,6 +17,10 @@ export const PHONE_PATTERN = /^\+?[0-9 ()-]+$/;
 export const SERIAL_NUMBER_MAX_LENGTH = 18;
 export const SERIAL_NUMBER_PATTERN = /^[A-Za-z0-9]+$/;
 
+/** Same rules as the backend's SAP code lookup (`GET /v1/products/code/:code`). */
+export const SAP_CODE_MAX_LENGTH = 40;
+export const SAP_CODE_PATTERN = /^[A-Za-z0-9]+$/;
+
 /** Same limits as the backend's invoice upload (`MAX_INVOICE_FILE_BYTES`, `INVOICE_MIME_TYPES`). */
 export const INVOICE_MAX_SIZE_BYTES = 10 * 1024 * 1024;
 export const INVOICE_ACCEPTED_MIME_TYPES = [
