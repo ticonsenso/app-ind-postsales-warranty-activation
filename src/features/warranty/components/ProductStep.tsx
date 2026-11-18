@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 
@@ -13,11 +14,17 @@ import { TextField } from '@/shared/components/TextField';
 
 import { GENERIC_ERROR_MESSAGE } from '../constants';
 import { useProductValidation } from '../hooks/use-product-validation';
+import { useSapCodeLookup } from '../hooks/use-sap-code-lookup';
 import { useWarrantyFlow } from '../hooks/use-warranty-flow';
-import { serialNumberFormSchema, type SerialNumberFormValues } from '../schemas/product.schema';
+import {
+  serialNumberFormSchema,
+  type Product,
+  type SerialNumberFormValues,
+} from '../schemas/product.schema';
 
 import { ProductScanCard } from './ProductScanCard';
 import { ProductSummaryCard } from './ProductSummaryCard';
+import { SapCodeForm } from './SapCodeForm';
 
 /** Messages that guide the user while the label is scanned. */
 const SHOW_SCAN_HINTS = true;
@@ -27,6 +34,11 @@ export function ProductStep() {
   const navigate = useNavigate();
   const { state, dispatch } = useWarrantyFlow();
   const validation = useProductValidation();
+  const sapLookup = useSapCodeLookup();
+  // The product is searched by serial; when SAP does not know it, the user can switch to its SAP code.
+  const [searchBy, setSearchBy] = useState<'serial' | 'sap-code'>('serial');
+  const serialFormId = useId();
+  const sapCodeFormId = useId();
 
   const {
     register,
@@ -41,9 +53,13 @@ export function ProductStep() {
     defaultValues: { serialNumber: '' },
   });
 
+  const storeProduct = (product: Product) => {
+    dispatch({ type: 'product-validated', product });
+  };
+
   const validateAndStore = async (code: string) => {
     const product = await validation.validate(code);
-    if (product) dispatch({ type: 'product-validated', product });
+    if (product) storeProduct(product);
   };
 
   // A new scan replaces whatever serial was typed or scanned before, along with its messages.
@@ -62,6 +78,19 @@ export function ProductStep() {
   const handleChangeProduct = () => {
     dispatch({ type: 'product-cleared' });
     validation.reset();
+    sapLookup.reset();
+    setSearchBy('serial');
+  };
+
+  const searchBySapCode = async (sapCode: string, serialNumber: string) => {
+    const product = await sapLookup.lookup(sapCode, serialNumber);
+    if (product) storeProduct(product);
+  };
+
+  // Going back to the serial keeps the typed serial and its "not found" notice.
+  const handleBackToSerial = () => {
+    sapLookup.reset();
+    setSearchBy('serial');
   };
 
   // Closing the notice leaves the step ready to scan or type another serial.
@@ -73,12 +102,24 @@ export function ProductStep() {
 
   const isValidating = validation.state.status === 'validating';
   const isNotFound = validation.state.status === 'not-found';
+  // Editing the serial discards the SAP code fallback, so a product is never stored with a serial
+  // other than the one SAP did not recognize.
+  const handleSerialChange = () => {
+    if (isNotFound) validation.reset();
+  };
+
+  const isSapCodeSearch =
+    !state.product && searchBy === 'sap-code' && validation.state.status === 'not-found';
 
   return (
     <Panel>
       <PanelHeader
         title="¿Qué producto vas a registrar?"
-        description="Encuentras el número de serie en la etiqueta adherida al producto o en su empaque original."
+        description={
+          isSapCodeSearch
+            ? 'Encuentras el código SAP en la etiqueta adherida al producto o en su empaque original, junto al número de serie.'
+            : 'Encuentras el número de serie en la etiqueta adherida al producto o en su empaque original.'
+        }
       />
 
       {state.product ? (
@@ -90,6 +131,31 @@ export function ProductStep() {
               Cambiar producto
             </Button>
             <Button onClick={() => void navigate(ROUTES.warranty.invoice)}>Continuar</Button>
+          </ActionRow>
+        </div>
+      ) : searchBy === 'sap-code' && validation.state.status === 'not-found' ? (
+        <div>
+          <SapCodeForm
+            id={sapCodeFormId}
+            serialNumber={validation.state.serialNumber}
+            lookupState={sapLookup.state}
+            onSubmit={(sapCode) => {
+              if (validation.state.status === 'not-found') {
+                void searchBySapCode(sapCode, validation.state.serialNumber);
+              }
+            }}
+          />
+          <ActionRow>
+            <Button variant="secondary" onClick={handleBackToSerial}>
+              Atrás
+            </Button>
+            <Button
+              type="submit"
+              form={sapCodeFormId}
+              loading={sapLookup.state.status === 'searching'}
+            >
+              Validar producto
+            </Button>
           </ActionRow>
         </div>
       ) : (
@@ -104,6 +170,7 @@ export function ProductStep() {
           <TextDivider>o ingrésalo a mano</TextDivider>
 
           <form
+            id={serialFormId}
             noValidate
             onSubmit={(event) => {
               void handleSubmit((values) => validateAndStore(values.serialNumber))(event);
@@ -129,26 +196,37 @@ export function ProductStep() {
                 input.setSelectionRange(start + text.length, start + text.length);
                 input.dispatchEvent(new Event('input', { bubbles: true }));
               }}
-              {...register('serialNumber')}
+              {...register('serialNumber', { onChange: handleSerialChange })}
             />
 
-            {isNotFound && <Alert tone="error">No encontramos un producto con ese código.</Alert>}
+            {isNotFound && (
+              <Alert tone="error">
+                No encontramos un producto con ese número de serie.{' '}
+                <button
+                  type="button"
+                  className="cursor-pointer font-semibold underline underline-offset-2"
+                  onClick={() => setSearchBy('sap-code')}
+                >
+                  Buscar por código SAP
+                </button>
+              </Alert>
+            )}
             {validation.state.status === 'error' && (
               <Alert tone="error">{GENERIC_ERROR_MESSAGE}</Alert>
             )}
-
-            <ActionRow>
-              <Button
-                variant="secondary"
-                onClick={() => void navigate(ROUTES.warranty.identification)}
-              >
-                Atrás
-              </Button>
-              <Button type="submit" loading={isValidating}>
-                Validar producto
-              </Button>
-            </ActionRow>
           </form>
+
+          <ActionRow>
+            <Button
+              variant="secondary"
+              onClick={() => void navigate(ROUTES.warranty.identification)}
+            >
+              Atrás
+            </Button>
+            <Button type="submit" form={serialFormId} loading={isValidating}>
+              Validar producto
+            </Button>
+          </ActionRow>
         </div>
       )}
 

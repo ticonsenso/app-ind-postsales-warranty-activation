@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { canAccessStep, findStepByPath, getFirstIncompleteStep } from './steps';
 import { INITIAL_WARRANTY_FLOW_STATE, type WarrantyFlowState } from './warranty-flow-reducer';
 
-const product = { id: 'product-1', code: '90002756', name: 'Heladera', serialNumber: 'SN123' };
+const product = {
+  id: 'product-1',
+  code: '90002756',
+  name: 'Heladera',
+  serialNumber: 'SN123',
+  identifiedBy: 'serial' as const,
+};
 const invoice = {
   purchaseDate: '2026-07-14',
   receiptNumber: '001-002-000032451',

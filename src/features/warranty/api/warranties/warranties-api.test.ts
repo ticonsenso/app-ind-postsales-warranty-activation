@@ -27,6 +27,7 @@ describe('createWarranty (POST /v1/warranties)', () => {
       code: EXISTING_PRODUCT_CODE,
       name: 'Heladera',
       serialNumber: 'SN123456789',
+      identifiedBy: 'serial' as const,
     },
     invoice: {
       purchaseDate: '2026-07-14',

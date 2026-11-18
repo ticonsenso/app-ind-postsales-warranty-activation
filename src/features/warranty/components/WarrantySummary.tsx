@@ -46,6 +46,10 @@ export function WarrantySummary({
           { label: 'Documento', value: customer.documentNumber },
           { label: 'Contacto', value: customer.email },
           { label: 'Producto', value: product.name },
+          // Shown when the serial was not recognized and the product was found by its SAP code.
+          ...(product.identifiedBy === 'sap-code'
+            ? [{ label: 'Código SAP', value: product.code }]
+            : []),
           { label: 'Número de serie', value: product.serialNumber },
           { label: 'Fecha de compra', value: formatShortDate(invoice.purchaseDate) },
           { label: 'Número de comprobante', value: invoice.receiptNumber },

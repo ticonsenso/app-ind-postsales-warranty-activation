@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { API_URL, EXISTING_PRODUCT_CODE, failure } from '@/test/msw/handlers';
 import { server } from '@/test/msw/server';
 
-import { getProductBySerialNumber } from './products-api';
+import { getProductBySapCode, getProductBySerialNumber } from './products-api';
 
 describe('getProductBySerialNumber (GET /v1/products/serial/:serialNumber)', () => {
   it('maps the Creatio columns to the product model and keeps the serial', async () => {
@@ -13,6 +13,7 @@ describe('getProductBySerialNumber (GET /v1/products/serial/:serialNumber)', () 
       code: EXISTING_PRODUCT_CODE,
       name: 'Heladera',
       serialNumber: EXISTING_PRODUCT_CODE,
+      identifiedBy: 'serial',
     });
   });
 
@@ -47,6 +48,33 @@ describe('getProductBySerialNumber (GET /v1/products/serial/:serialNumber)', () 
     );
 
     await expect(getProductBySerialNumber(EXISTING_PRODUCT_CODE)).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+      status: 429,
+    });
+  });
+});
+
+describe('getProductBySapCode (GET /v1/products/code/:code)', () => {
+  const SERIAL = 'E70250597013871225';
+
+  it('maps the Creatio columns to the product model and keeps the unit serial', async () => {
+    await expect(getProductBySapCode(EXISTING_PRODUCT_CODE, SERIAL)).resolves.toEqual({
+      id: '0c1d2e3f-0000-4000-8000-000000000001',
+      code: EXISTING_PRODUCT_CODE,
+      name: 'Heladera',
+      serialNumber: SERIAL,
+      identifiedBy: 'sap-code',
+    });
+  });
+
+  it('resolves null when no CRM product has that code (PRODUCT_NOT_FOUND)', async () => {
+    await expect(getProductBySapCode('00000000', SERIAL)).resolves.toBeNull();
+  });
+
+  it('rejects with the backend error code on other failures', async () => {
+    server.use(http.get(`${API_URL}/products/code/:code`, () => failure(429, 'TOO_MANY_REQUESTS')));
+
+    await expect(getProductBySapCode(EXISTING_PRODUCT_CODE, SERIAL)).rejects.toMatchObject({
       code: 'TOO_MANY_REQUESTS',
       status: 429,
     });
